@@ -5,6 +5,7 @@ use imageproc::*;
 use mihomo4::*;
 use rusttype::*;
 use std::error::Error;
+use crate::config::*;
 
 pub fn print() {
     println!("hello");
@@ -47,29 +48,65 @@ async fn render_char_img(
     image::imageops::overlay(&mut bg, &chara, 0, 0);
 
     if let Ok(element_img) = get_img_from_url(&get_asset_url(&ch.element.icon)).await {
-        let outline_width = 3;
         let outline_color = Rgba([26, 26, 26, 255]);
+        let outline_width = 2;
+        let resize_width = 115;
 
-        let element_img_resized =
-            element_img.resize_exact(115, 115, image::imageops::FilterType::Triangle);
-        let mut outlined_img = create_light_block(115 + outline_width * 2, 115 + outline_width * 2);
+        let element_img_resized = element_img
+            .resize_exact(
+                resize_width,
+                resize_width,
+                image::imageops::FilterType::Triangle,
+            )
+            .to_rgba8();
 
-        for y in 0..outlined_img.height() {
-            for x in 0..outlined_img.width() {
-                outlined_img.put_pixel(x, y, outline_color);
-            }
-        }
-        image::imageops::overlay(
+        let mut outlined_img =
+            create_png_outline(&element_img_resized, outline_color, outline_width);
+
+        imageops::overlay(
             &mut outlined_img,
-            &element_img_resized.to_rgba8(),
+            &element_img_resized,
             outline_width.into(),
             outline_width.into(),
         );
 
-        image::imageops::overlay(&mut bg, &outlined_img, 19, 108);
+        imageops::overlay(&mut bg, &outlined_img, 19, 108);
     }
 
-    let mask = create_rounded_mask((bg.width(), bg.height()), 15).convert();
+    let font = get_font().ok_or("Font not found")?;
+
+    let name = &ch.name;
+    let scale = 62.0;
+    let position = (19, 60);
+    let color = Rgba([255, 255, 255, 255]);
+    let stroke_color = Rgba([26, 26, 26, 255]);
+    let stroke_width = 2.0;
+    draw_text(
+        &mut bg,
+        name,
+        position,
+        &font,
+        scale,
+        color,
+        stroke_color,
+        stroke_width,
+    );
+
+    let level_text = format!("Lv. {}/{}", ch.level, ch.max_level());
+    let position = (22, 102);
+    let scale = 31.0;
+    draw_text(
+        &mut bg,
+        &level_text,
+        position,
+        &font,
+        scale,
+        color,
+        stroke_color,
+        stroke_width,
+    );
+
+    let mask = create_rounded_mask((bg.width(), bg.height()), 25).convert();
     apply_mask(&mut bg, &mask);
 
     image::imageops::overlay(img, &bg, 30, 30);

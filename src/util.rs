@@ -1,8 +1,9 @@
-use image::GenericImageView;
-use image::{DynamicImage, GrayImage, Rgb, RgbImage, Rgba, RgbaImage};
+use image::imageops::overlay;
+use image::{DynamicImage, GenericImageView, GrayImage, LumaA, Rgb, RgbImage, Rgba, RgbaImage};
 use imageproc::drawing::{draw_filled_circle_mut, draw_filled_rect_mut};
 use imageproc::rect::Rect;
 use mihomo4::Client;
+use rusttype::{Font, Scale, PositionedGlyph, point};
 use std::error::Error;
 use std::io::Cursor;
 
@@ -207,4 +208,99 @@ pub fn resize_to_fill_top(
     let crop_height = height.min(img_height);
 
     resized.crop_imm(0, crop_y, width, crop_height)
+}
+
+pub fn create_png_outline(
+    img: &RgbaImage,
+    outline_color: Rgba<u8>,
+    outline_width: u32,
+) -> RgbaImage {
+    let width = img.width();
+    let height = img.height();
+
+    let mut outlined_img = RgbaImage::new(width + outline_width * 2, height + outline_width * 2);
+
+    for y in 0..outlined_img.height() {
+        for x in 0..outlined_img.width() {
+            outlined_img.put_pixel(x, y, Rgba([0, 0, 0, 0]));
+        }
+    }
+
+    for y in 0..height {
+        for x in 0..width {
+            let pixel = img.get_pixel(x, y);
+            if pixel[3] != 0 {
+                for offset_y in -(outline_width as i32)..=(outline_width as i32) {
+                    for offset_x in -(outline_width as i32)..=(outline_width as i32) {
+                        let new_x = (x as i32 + offset_x + outline_width as i32) as u32;
+                        let new_y = (y as i32 + offset_y + outline_width as i32) as u32;
+
+                        if new_x < outlined_img.width() && new_y < outlined_img.height() {
+                            outlined_img.put_pixel(new_x, new_y, outline_color);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    outlined_img
+}
+
+pub fn draw_text(
+    img: &mut RgbaImage,
+    text: &str,
+    position: (i32, i32),
+    font: &rusttype::Font,
+    scale: f32,
+    color: Rgba<u8>,
+    stroke_color: Rgba<u8>,
+    stroke_width: f32,
+) {
+    let scale = Scale { x: scale, y: scale };
+    let offset = point(position.0 as f32, position.1 as f32);
+
+    let glyphs: Vec<PositionedGlyph> = font.layout(text, scale, offset).collect();
+
+    for glyph in glyphs {
+        if let Some(bounding_box) = glyph.pixel_bounding_box() {
+            if stroke_width > 0.0 {
+                glyph.draw(|x, y, v| {
+                    let x2 = (x as i32 + bounding_box.min.x) as u32;
+                    let y2 = (y as i32 + bounding_box.min.y) as u32;
+                    if v > 0.0 {
+                        if x2 < img.width() && y2 < img.height() {
+                            let pixel = img.get_pixel_mut(x2, y2);
+                            let blended = blend_text_pixel(*pixel, stroke_color);
+                            *pixel = blended;
+                        }
+                    }
+                });
+            }
+
+            glyph.draw(|x, y, v| {
+                let x2 = (x as i32 + bounding_box.min.x) as u32;
+                let y2 = (y as i32 + bounding_box.min.y) as u32;
+                if v > 0.0 {
+                    if x2 < img.width() && y2 < img.height() {
+                        let pixel = img.get_pixel_mut(x2, y2);
+                        let blended = blend_text_pixel(*pixel, color);
+                        *pixel = blended;
+                    }
+                }
+            });
+        }
+    }
+}
+
+fn blend_text_pixel(bottom: Rgba<u8>, top: Rgba<u8>) -> Rgba<u8> {
+    let alpha = top[3] as f32 / 255.0;
+    let inv_alpha = 1.0 - alpha;
+
+    Rgba([
+        (top[0] as f32 * alpha + bottom[0] as f32 * inv_alpha) as u8,
+        (top[1] as f32 * alpha + bottom[1] as f32 * inv_alpha) as u8,
+        (top[2] as f32 * alpha + bottom[2] as f32 * inv_alpha) as u8,
+        255,
+    ])
 }
