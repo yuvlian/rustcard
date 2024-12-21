@@ -1,0 +1,24 @@
+[package]
+name = "rustcard"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+image = "0.25.5"
+imageproc = "0.25.0"
+mihomo4 = { git = "https://github.com/yuvlian/mihomo4", rev = "990c644" }
+rusttype = "0.9.3"
+tokio = { version = "1.42.0", features = ["rt-multi-thread", "macros"] }
+
+[profile.release]
+strip = true
+lto = true
+opt-level = 3
+codegen-units = 1
+# this will always crash when panic
+panic = "abort"
+
+[profile.release.build-override]
+strip = true
+opt-level = 3
+codegen-units = 1
