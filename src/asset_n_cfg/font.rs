@@ -1,5 +1,4 @@
 use ab_glyph::FontRef;
-use ab_glyph::{Font, PxScale};
 
 pub fn get_font<'a>() -> FontRef<'a> {
     FontRef::try_from_slice(&WORK_SANS_SEMI_BOLD_TTF).expect("This should never happen")

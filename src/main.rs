@@ -3,9 +3,7 @@ mod asset_n_cfg;
 mod card_gen;
 mod utils;
 
-use asset_n_cfg::*;
-use card_gen::*;
-use utils::*;
+use card_gen::create_card;
 
 use mihomo4::*;
 

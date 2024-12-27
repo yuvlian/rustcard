@@ -71,7 +71,7 @@ pub async fn render(
 
     let ch_lv_txt = format!("Lv. {}/{}", ch.level, ch.max_level());
     let ch_lv_txt_pos = (20, 72);
-    let ch_lv_txt_scale = PxScale::from(51.0);
+    let ch_lv_txt_scale = PxScale::from(31.0);
 
     // draw lvl
     draw_text_with_outline(

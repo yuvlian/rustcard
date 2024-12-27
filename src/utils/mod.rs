@@ -1,3 +1,4 @@
+pub mod blend_alpha;
 pub mod draw_blocks;
 pub mod fetch_img;
 pub mod img_size_manip;
