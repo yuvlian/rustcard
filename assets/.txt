@@ -1,0 +1,2 @@
+todo: embed path & element images to reduce bullshit
+      maybe even pre-resize them?
