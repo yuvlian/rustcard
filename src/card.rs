@@ -1,11 +1,12 @@
+use crate::config::*;
 use crate::util::*;
 use image::buffer::ConvertBuffer;
 use image::*;
+use imageproc::drawing::draw_text_mut;
 use imageproc::*;
 use mihomo4::*;
 use rusttype::*;
 use std::error::Error;
-use crate::config::*;
 
 pub fn print() {
     println!("hello");
@@ -44,7 +45,12 @@ async fn render_char_img(
         _ => get_img_from_url(&get_asset_url(&ch.preview)).await?,
     };
 
-    let chara = resize_to_fill_top(&im, 650, 716, image::imageops::FilterType::Triangle);
+    let chara = resize_to_fill_and_stick_image_top_to_top(
+        &im,
+        650,
+        716,
+        image::imageops::FilterType::Triangle,
+    );
     image::imageops::overlay(&mut bg, &chara, 0, 0);
 
     if let Ok(element_img) = get_img_from_url(&get_asset_url(&ch.element.icon)).await {
@@ -73,38 +79,32 @@ async fn render_char_img(
         imageops::overlay(&mut bg, &outlined_img, 19, 108);
     }
 
-    let font = get_font().ok_or("Font not found")?;
+    // let font = get_font().ok_or("Font not found")?;
+    let ab_font = get_ab_font();
 
     let name = &ch.name;
     let scale = 62.0;
-    let position = (19, 60);
-    let color = Rgba([255, 255, 255, 255]);
-    let stroke_color = Rgba([26, 26, 26, 255]);
-    let stroke_width = 2.0;
-    draw_text(
-        &mut bg,
-        name,
-        position,
-        &font,
-        scale,
-        color,
-        stroke_color,
-        stroke_width,
-    );
-
-    let level_text = format!("Lv. {}/{}", ch.level, ch.max_level());
-    let position = (22, 102);
-    let scale = 31.0;
-    draw_text(
-        &mut bg,
-        &level_text,
-        position,
-        &font,
-        scale,
-        color,
-        stroke_color,
-        stroke_width,
-    );
+    let position = (19, 19);
+    let color = Rgba([26, 26, 26, 255]);
+    let color2 = Rgba([255, 255, 255, 255]);
+    let scale = ab_glyph::PxScale::from(82.0);
+    let scale2 = ab_glyph::PxScale::from(62.0);
+    // draw_text_mut(&mut bg, color, 19i32, 60i32, scale, &ab_font, name);
+    // draw_text_mut(&mut bg, color2, 19i32, 60i32, scale2, &ab_font, name);
+    draw_text_with_outline(&mut bg, name, position, &ab_font, scale2, color2, color, 5i32);
+    // let level_text = format!("Lv. {}/{}", ch.level, ch.max_level());
+    // let position = (22, 102);
+    // let scale = 31.0;
+    // draw_text(
+    //     &mut bg,
+    //     &level_text,
+    //     position,
+    //     &font,
+    //     scale,
+    //     color,
+    //     stroke_color,
+    //     stroke_width,
+    // );
 
     let mask = create_rounded_mask((bg.width(), bg.height()), 25).convert();
     apply_mask(&mut bg, &mask);

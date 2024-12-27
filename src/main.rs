@@ -1,3 +1,4 @@
+#![allow(unused)]
 mod card;
 mod config;
 mod util;
@@ -29,10 +30,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let sr = Mihomo::fetch_user(802775147, &lang, &client).await?;
     let ch = sr.clone().get_character_by_name("Firefly").unwrap().clone();
+    let ch2 = sr.clone().get_character_by_name("Fu Xuan").unwrap().clone();
     let plr = sr.player.clone();
 
     let test = create_card(&ch, &plr, None).await?;
     test.save("fftest.png")?;
+    let test = create_card(&ch2, &plr, None).await?;
+    test.save("fxtest.png")?;
 
     Ok(())
 }

@@ -3,9 +3,10 @@ use image::{DynamicImage, GenericImageView, GrayImage, LumaA, Rgb, RgbImage, Rgb
 use imageproc::drawing::{draw_filled_circle_mut, draw_filled_rect_mut};
 use imageproc::rect::Rect;
 use mihomo4::Client;
-use rusttype::{Font, Scale, PositionedGlyph, point};
+use rusttype::{Font, PositionedGlyph, Scale, point};
 use std::error::Error;
 use std::io::Cursor;
+use imageproc::drawing::draw_text_mut;
 
 const ASSET_BASE_URL: &str = "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/";
 
@@ -195,19 +196,27 @@ pub fn resize_to_fit(
     image.resize(new_dimensions.0, new_dimensions.1, filter)
 }
 
-pub fn resize_to_fill_top(
+pub fn resize_to_fill_and_stick_image_top_to_top(
     image: &DynamicImage,
     width: u32,
     height: u32,
     filter: image::imageops::FilterType,
 ) -> DynamicImage {
-    let resized = image.resize_to_fill(width, height, filter);
-    let (img_width, img_height) = resized.dimensions();
+    let aspect_width = width as f32 / image.width() as f32;
+    let aspect_height = height as f32 / image.height() as f32;
 
+    let scale_factor = aspect_width.max(aspect_height);
+    let scaled_width = (image.width() as f32 * scale_factor).ceil() as u32;
+    let scaled_height = (image.height() as f32 * scale_factor).ceil() as u32;
+
+    let resized = image.resize(scaled_width, scaled_height, filter);
+
+    let crop_x = ((scaled_width - width) / 2).min(scaled_width - width);
     let crop_y = 0;
-    let crop_height = height.min(img_height);
+    let crop_width = width.min(scaled_width);
+    let crop_height = height.min(scaled_height);
 
-    resized.crop_imm(0, crop_y, width, crop_height)
+    resized.crop_imm(crop_x, crop_y, crop_width, crop_height)
 }
 
 pub fn create_png_outline(
@@ -245,6 +254,45 @@ pub fn create_png_outline(
     }
 
     outlined_img
+}
+
+pub fn draw_text_with_outline(
+    img: &mut RgbaImage,
+    text: &str,
+    position: (i32, i32),
+    font: &impl ab_glyph::Font,
+    scale: ab_glyph::PxScale,
+    text_color: Rgba<u8>,
+    outline_color: Rgba<u8>,
+    outline_thickness: i32,
+) {
+    let (x, y) = position;
+
+    for dx in -outline_thickness..=outline_thickness {
+        for dy in -outline_thickness..=outline_thickness {
+            if dx * dx + dy * dy <= outline_thickness * outline_thickness {
+                draw_text_mut(
+                    img,
+                    outline_color,
+                    x + dx,
+                    y + dy,
+                    scale,
+                    font,
+                    text,
+                );
+            }
+        }
+    }
+
+    draw_text_mut(
+        img,
+        text_color,
+        x,
+        y,
+        scale,
+        font,
+        text,
+    );
 }
 
 pub fn draw_text(
