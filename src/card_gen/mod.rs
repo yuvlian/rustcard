@@ -6,6 +6,7 @@ use std::error::Error;
 
 mod char_img;
 mod char_rank;
+mod char_path;
 
 pub async fn create_card(
     ch: &CharacterData,
@@ -23,7 +24,10 @@ pub async fn create_card(
     char_rank::render(&mut img, ch).await?;
 
     render_skill(&mut img, ch, &font);
-    render_path(&mut img, ch, &font);
+
+    println!("->> Character Path");
+    char_path::render(&mut img, ch).await?;
+
     render_user(&mut img, plr, &font);
     render_lc(&mut img, ch, &font);
     render_stats(&mut img, ch, &font);

@@ -19,8 +19,11 @@ pub async fn render(img: &mut RgbaImage, ch: &CharacterData) -> Result<(), Box<d
         } else {
             let mut overlay = RgbaImage::new(71, 71);
             for (x, y, pixel) in rank_resized.enumerate_pixels() {
-                let new_pixel = Rgba([pixel[0], pixel[1], pixel[2], 50]);
-                overlay.put_pixel(x, y, new_pixel);
+                let new_pixel = match pixel[3] {
+                    0 => pixel,
+                    _ => &Rgba([pixel[0], pixel[1], pixel[2], 35]),
+                };
+                overlay.put_pixel(x, y, *new_pixel);
             }
             overlay
         };
@@ -30,7 +33,7 @@ pub async fn render(img: &mut RgbaImage, ch: &CharacterData) -> Result<(), Box<d
         ops_overlay(&mut rank_bar, &to_paste, x_offset as i64, y_offset as i64);
     }
 
-    let rank_bar_mask = draw_rounded_mask((rank_bar.width(), rank_bar.height()), 15);
+    let rank_bar_mask = draw_rounded_mask((rank_bar.width(), rank_bar.height()), 25);
     apply_mask(&mut rank_bar, &rank_bar_mask);
 
     let x_position = 30 + 650 + 18;
