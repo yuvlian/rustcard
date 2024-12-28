@@ -8,8 +8,8 @@ pub fn get_full_asset_url(path: &str) -> String {
     format!("{}{}", ASSET_BASE_URL, path)
 }
 
-pub async fn get_img_from_url(url: &str) -> Result<DynamicImage, Box<dyn Error>> {
-    let response = Client::new().get(url).send().await?;
+pub async fn get_img_from_url(url: &str, cl: &Client) -> Result<DynamicImage, Box<dyn Error>> {
+    let response = cl.get(url).send().await?;
     let bytes = response.bytes().await?;
 
     let img = load_from_memory_with_format(&bytes, ImageFormat::Png)?;

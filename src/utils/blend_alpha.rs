@@ -5,7 +5,7 @@ pub fn blend_image_pixel(bg: Rgba<u8>, fg: Rgba<u8>) -> Rgba<u8> {
     let alpha_bg = bg[3] as f32 / 255.0;
 
     let out_alpha = alpha_fg + alpha_bg * (1.0 - alpha_fg);
-    
+
     let out_r = if out_alpha > 0.0 {
         ((fg[0] as f32 * alpha_fg) + (bg[0] as f32 * alpha_bg * (1.0 - alpha_fg))) / out_alpha
     } else {
